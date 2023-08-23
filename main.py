@@ -16,6 +16,9 @@ load_dotenv()
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
 Bootstrap5(app)
+ckeditor = CKEditor(app)
+
+
 
 # CONNECT TO DB
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['SQLALCHEMY_DATABASE_URI']
@@ -38,6 +41,15 @@ with app.app_context():
     db.create_all()
 
 
+class NewPost(FlaskForm):
+    title = StringField(label="Blog Post Title", validators=[DataRequired()])
+    subtitle = StringField(label="Subtitle", validators=[DataRequired()])
+    author = StringField(label="Your name", validators=[DataRequired()])
+    image_url = StringField(label="Blog image URL", validators=[URL()])
+    blog_content= CKEditorField(validators=[DataRequired()])
+    submit = SubmitField(label="Submit Post")
+
+
 @app.route('/')
 def get_all_posts():
     # TODO: Query the database for all the posts. Convert the data to a python list.
@@ -53,6 +65,25 @@ def show_post(post_id):
 
 
 # TODO: add_new_post() to create a new blog post
+@app.route('/new-post', methods=['GET', 'POST'])
+def make_post():
+    form = NewPost()
+
+    if form.is_submitted():
+        new_post = BlogPost(
+            title=form.title.data,
+            subtitle=form.subtitle.data,
+            author=form.author.data,
+            img_url=form.image_url.data,
+            body=form.blog_content.data,
+            date=date.today().strftime("%B %d, %Y"),
+        )
+
+        db.session.add(new_post)
+        db.session.commit()
+        return redirect(url_for('get_all_posts'))
+
+    return render_template('make-post.html', form=form)
 
 # TODO: edit_post() to change an existing blog post
 
