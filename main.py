@@ -113,6 +113,13 @@ def edit_post(post_id):
 
 
 # TODO: delete_post() to remove a blog post from the database
+@app.route("/delete/<post_id>", methods=['GET', 'DELETE'])
+def delete_post(post_id):
+    post = db.get_or_404(BlogPost, post_id)
+    db.session.delete(post)
+    db.session.commit()
+    return redirect(url_for('get_all_posts'))
+
 
 # Below is the code from previous lessons. No changes needed.
 @app.route("/about")
