@@ -41,7 +41,7 @@ with app.app_context():
     db.create_all()
 
 
-class NewPost(FlaskForm):
+class CreatePostForm(FlaskForm):
     title = StringField(label="Blog Post Title", validators=[DataRequired()])
     subtitle = StringField(label="Subtitle", validators=[DataRequired()])
     author = StringField(label="Your name", validators=[DataRequired()])
@@ -67,7 +67,8 @@ def show_post(post_id):
 # TODO: add_new_post() to create a new blog post
 @app.route('/new-post', methods=['GET', 'POST'])
 def make_post():
-    form = NewPost()
+    context = 'make_post'
+    form = CreatePostForm()
 
     if form.is_submitted():
         new_post = BlogPost(
@@ -83,9 +84,33 @@ def make_post():
         db.session.commit()
         return redirect(url_for('get_all_posts'))
 
-    return render_template('make-post.html', form=form)
+    return render_template('make-post.html', form=form, context=context)
+
 
 # TODO: edit_post() to change an existing blog post
+@app.route("/edit-post/<post_id>", methods=['GET', 'POST'])
+def edit_post(post_id):
+    post = db.get_or_404(BlogPost, post_id)
+    edit_form = CreatePostForm(
+        title=post.title,
+        subtitle=post.subtitle,
+        image_url=post.img_url,
+        author=post.author,
+        blog_content=post.body
+    )
+
+    if edit_form.is_submitted():
+        post.title = edit_form.title.data
+        post.subtitle = edit_form.subtitle.data
+        post.author = edit_form.author.data
+        post.img_url = edit_form.image_url.data
+        post.body = edit_form.blog_content.data
+        db.session.commit()
+        return redirect(url_for('get_all_posts'))
+
+    return render_template("make-post.html", post=post, form=edit_form)
+
+
 
 # TODO: delete_post() to remove a blog post from the database
 
